@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body style="margin:0">
+<title>Amigo Secreto</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: una sola pagina que cambia de estado (lista -> sorteo -> enlaces/revelacion).
+     Festivo pero sobrio: verde pino profundo, dorado calido, crema. */
+  :root {
+    --bg: #f3efe6;
+    --surface: #ffffff;
+    --surface-2: #faf7f0;
+    --ink: #1f2a24;
+    --ink-soft: #55615a;
+    --line: #e2dccf;
+    --pine: #1d6b4f;
+    --pine-deep: #124632;
+    --gold: #b8863b;
+    --gold-soft: #f0e2c6;
+    --berry: #a8324a;
+    --shadow: 0 10px 30px rgba(18,70,50,.12);
+    --radius: 16px;
+    --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101814;
+      --surface: #182420;
+      --surface-2: #1e2c27;
+      --ink: #eef3ef;
+      --ink-soft: #a6b4ac;
+      --line: #2b3a34;
+      --pine: #4fb389;
+      --pine-deep: #0c3324;
+      --gold: #e2b665;
+      --gold-soft: #35301f;
+      --berry: #e28197;
+      --shadow: 0 12px 34px rgba(0,0,0,.45);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101814;
+    --surface: #182420;
+    --surface-2: #1e2c27;
+    --ink: #eef3ef;
+    --ink-soft: #a6b4ac;
+    --line: #2b3a34;
+    --pine: #4fb389;
+    --pine-deep: #0c3324;
+    --gold: #e2b665;
+    --gold-soft: #35301f;
+    --berry: #e28197;
+    --shadow: 0 12px 34px rgba(0,0,0,.45);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 56px;
+  }
+
+  header { text-align: center; margin-bottom: 22px; }
+  .ribbon {
+    display: inline-block; font-size: .72rem; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--gold); font-weight: 600; margin-bottom: 8px;
+  }
+  h1 {
+    font-family: var(--font-display); font-optical-sizing: auto; font-weight: 600;
+    font-size: clamp(2.1rem, 8vw, 3rem); line-height: 1.02; margin: 0; text-wrap: balance;
+  }
+  .sub { color: var(--ink-soft); margin: 10px auto 0; max-width: 44ch; font-size: .95rem; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px;
+  }
+  .card + .card { margin-top: 18px; }
+
+  label { display: block; font-weight: 600; font-size: .85rem; margin-bottom: 6px; }
+  .hint { color: var(--ink-soft); font-weight: 400; font-size: .78rem; }
+  input[type="text"], input[type="email"], input[type="url"] {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--line);
+    border-radius: 11px; background: var(--surface-2); color: var(--ink); font: inherit; min-width: 0;
+  }
+  input:focus-visible { outline: 2px solid var(--pine); outline-offset: 1px; }
+  .field + .field { margin-top: 12px; }
+
+  .btn {
+    font: inherit; font-weight: 600; border: none; border-radius: 11px;
+    padding: 13px 18px; cursor: pointer; transition: transform .06s ease, filter .15s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--pine); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.05); }
+  .btn-gold { background: var(--gold); color: #1d1402; }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+  .btn-block { display: block; width: 100%; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 0; }
+
+  .count { display: flex; align-items: baseline; justify-content: space-between; margin: 20px 0 10px; }
+  .count h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.3rem; margin: 0; }
+  .count .n { color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+  ul.people { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  ul.people li {
+    display: flex; align-items: center; gap: 12px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px;
+  }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    flex: none; background: var(--gold-soft); color: var(--gold); font-weight: 700; font-size: .9rem;
+  }
+  .pname { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+  .pmeta { color: var(--ink-soft); font-size: .78rem; overflow-wrap: anywhere; }
+  .grow { flex: 1; min-width: 0; }
+  .del {
+    background: none; border: none; color: var(--ink-soft); cursor: pointer;
+    font-size: 1.1rem; padding: 4px 8px; border-radius: 8px; flex: none;
+  }
+  .del:hover { color: var(--berry); background: var(--surface-2); }
+  .empty { color: var(--ink-soft); text-align: center; padding: 18px; font-size: .9rem; }
+
+  .done-banner {
+    text-align: center; background: var(--gold-soft); border: 1px solid var(--gold);
+    color: var(--ink); border-radius: var(--radius); padding: 18px; margin-bottom: 16px;
+  }
+  .done-banner b { color: var(--gold); }
+
+  .section-title {
+    font-family: var(--font-display); font-weight: 600; font-size: 1.25rem;
+    margin: 26px 0 4px;
+  }
+  .section-note { color: var(--ink-soft); font-size: .86rem; margin: 0 0 12px; }
+
+  .share-step {
+    background: var(--surface-2); border: 1px dashed var(--gold); border-radius: 12px;
+    padding: 14px; font-size: .86rem; margin-bottom: 14px;
+  }
+  .share-step b { color: var(--gold); }
+
+  ul.links { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  ul.links li {
+    display: flex; align-items: center; gap: 12px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+  }
+  .link-copy {
+    flex: none; font: inherit; font-weight: 600; font-size: .82rem; cursor: pointer;
+    background: var(--pine); color: #fff; border: none; border-radius: 9px; padding: 9px 12px;
+  }
+  .link-copy.done { background: var(--gold); color: #1d1402; }
+
+  /* Grilla "pasar el telefono" */
+  .grid-names { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .name-btn {
+    position: relative; font: inherit; font-weight: 600; cursor: pointer; text-align: left;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; color: var(--ink); display: flex; align-items: center; gap: 10px;
+  }
+  .name-btn:hover { border-color: var(--pine); }
+  .name-btn.seen { opacity: .5; }
+  .name-btn .check { margin-left: auto; color: var(--pine); font-weight: 700; flex: none; }
+
+  /* Revelacion a pantalla completa */
+  .reveal-screen {
+    position: fixed; inset: 0; z-index: 50; background: var(--pine-deep); color: #fff;
+    display: grid; place-items: center; text-align: center;
+    padding: max(24px, env(safe-area-inset-top,0px)) max(20px, env(safe-area-inset-right,0px)) max(24px, env(safe-area-inset-bottom,0px)) max(20px, env(safe-area-inset-left,0px));
+  }
+  .reveal-inner { max-width: 440px; width: 100%; }
+  .reveal-eyebrow { color: #e2b665; letter-spacing: .14em; text-transform: uppercase; font-size: .72rem; font-weight: 600; }
+  .reveal-name {
+    font-family: var(--font-display); font-weight: 600; font-size: clamp(2.4rem, 12vw, 3.6rem);
+    line-height: 1.05; margin: 8px 0 2px; text-wrap: balance; color: #fff;
+  }
+  .reveal-hi { font-size: 1.05rem; opacity: .9; }
+  .reveal-hi strong { color: #e2b665; }
+  .reveal-lead { opacity: .85; margin-top: 20px; font-size: .95rem; }
+  .reveal-wish {
+    background: rgba(255,255,255,.1); border-radius: 12px; padding: 12px 14px; margin-top: 18px;
+    font-size: .92rem; overflow-wrap: anywhere;
+  }
+  .reveal-wish span { display: block; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; opacity: .7; margin-bottom: 3px; }
+  .reveal-actions { margin-top: 28px; display: grid; gap: 10px; }
+  .reveal-hint { opacity: .72; font-size: .82rem; margin-top: 16px; }
+  .pre { opacity: .9; font-size: 1.05rem; }
+  .pre strong { color: #e2b665; }
+  .secret-badge {
+    display: inline-block; margin-top: 22px; font-size: .82rem; opacity: .8;
+    border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: 6px 14px;
+  }
+
+  .note { font-size: .8rem; color: var(--ink-soft); margin-top: 14px; text-align: center; overflow-wrap: anywhere; }
+  .toggle-theme {
+    position: fixed; top: max(10px, env(safe-area-inset-top,0px)); right: max(10px, env(safe-area-inset-right,0px));
+    z-index: 40; background: var(--surface); border: 1px solid var(--line); color: var(--ink-soft);
+    border-radius: 999px; width: 38px; height: 38px; cursor: pointer; font-size: 1rem;
+  }
+  [hidden] { display: none !important; }
+  @media (max-width: 420px) { .grid-names { grid-template-columns: 1fr 1fr; } }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+
+<button class="toggle-theme" id="themeBtn" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+
+<!-- ======= VISTA INVITADO: alguien abrio su enlace personal ======= -->
+<div class="reveal-screen" id="guestScreen" hidden>
+  <div class="reveal-inner">
+    <div class="reveal-eyebrow">Amigo Secreto</div>
+    <p class="reveal-hi" id="guestHi" hidden>Hola <strong id="guestGiver"></strong> 👋</p>
+    <p class="reveal-lead">Te toca regalarle a…</p>
+    <div class="reveal-name" id="guestReceiver">—</div>
+    <div class="reveal-wish" id="guestWish" hidden><span>Idea de regalo</span><div id="guestWishText"></div></div>
+    <div class="secret-badge">🤫 Guárdalo en secreto</div>
+  </div>
+</div>
+
+<!-- ======= VISTA ORGANIZADOR ======= -->
+<div class="wrap" id="app">
+  <header>
+    <span class="ribbon">Sorteo de regalos</span>
+    <h1>Amigo Secreto</h1>
+    <p class="sub">Agrega a todos, haz el sorteo (a nadie le toca él mismo) y envía a cada persona un enlace privado. Cada uno abre el suyo y ve, solo él, a quién le regala.</p>
+  </header>
+
+  <!-- PANTALLA 1: ARMAR LA LISTA -->
+  <section id="setup">
+    <div class="card">
+      <div class="field">
+        <label for="inName">Nombre <span class="hint">(obligatorio)</span></label>
+        <input type="text" id="inName" placeholder="Ej: Matías" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="inWish">Idea de regalo o gustos <span class="hint">(opcional)</span></label>
+        <input type="text" id="inWish" placeholder="Ej: le gusta el chocolate, talla M" autocomplete="off">
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary btn-block" id="addBtn">Agregar a la lista</button>
+      </div>
+    </div>
+
+    <div class="count">
+      <h2>Participantes</h2>
+      <span class="n" id="countN">0</span>
+    </div>
+    <ul class="people" id="peopleList"></ul>
+    <div class="empty" id="emptyState">Todavía no hay nadie. Agrega al menos 3 personas.</div>
+
+    <div style="margin-top:20px">
+      <button class="btn btn-gold btn-block" id="drawBtn" disabled>🎁 Hacer el sorteo</button>
+      <p class="note" id="drawNote">Necesitas al menos 3 participantes.</p>
+    </div>
+  </section>
+
+  <!-- PANTALLA 2: SORTEO LISTO -->
+  <section id="revealHub" hidden>
+    <div class="done-banner"><b>¡Sorteo hecho!</b><br>A nadie le tocó él mismo. Ahora reparte los enlaces.</div>
+
+    <h3 class="section-title">Enviar un enlace a cada uno</h3>
+    <p class="section-note">Cada persona abre su enlace en su propio celular y ve a quién le toca. El botón no te muestra el resultado, para que siga siendo secreto.</p>
+
+    <div class="share-step">
+      <b>Primero, un paso único:</b> comparte esta página con el botón <b>Compartir</b> (arriba a la derecha) y elige <b>“Cualquiera con el enlace”</b>. Si no lo haces, tus invitados no podrán abrir su enlace.
+    </div>
+
+    <div class="field" style="margin-bottom:12px">
+      <label for="baseUrl">Enlace de esta página <span class="hint">(ya viene puesto; cámbialo solo si no funciona)</span></label>
+      <input type="url" id="baseUrl" autocomplete="off">
+    </div>
+
+    <ul class="links" id="linkList"></ul>
+
+    <h3 class="section-title">O pasar el teléfono</h3>
+    <p class="section-note">Si están todos juntos: cada quien toca su nombre y ve su resultado en secreto, luego pasa el teléfono.</p>
+    <div class="grid-names" id="nameGrid"></div>
+
+    <div style="margin-top:24px" class="row">
+      <button class="btn btn-ghost" id="redrawBtn">Repetir sorteo</button>
+      <button class="btn btn-ghost" id="editBtn">Volver a la lista</button>
+    </div>
+    <p class="note">El teléfono guarda este sorteo aunque cierres la página.</p>
+  </section>
+</div>
+
+<!-- Revelacion al pasar el telefono -->
+<div class="reveal-screen" id="revealScreen" hidden>
+  <div class="reveal-inner">
+    <div id="revealConfirm">
+      <div class="reveal-eyebrow">En secreto</div>
+      <p class="pre">¿Eres <strong id="confirmName">—</strong>?</p>
+      <p class="reveal-hint">Asegúrate de que nadie más esté mirando la pantalla.</p>
+      <div class="reveal-actions">
+        <button class="btn btn-gold btn-block" id="confirmYes">Sí, mostrar a quién me tocó</button>
+        <button class="btn btn-ghost btn-block" id="confirmNo" style="color:#fff;border-color:rgba(255,255,255,.4)">No soy yo</button>
+      </div>
+    </div>
+    <div id="revealResult" hidden>
+      <div class="reveal-eyebrow">Te toca regalarle a</div>
+      <div class="reveal-name" id="resultName">—</div>
+      <div class="reveal-wish" id="resultWish" hidden><span>Idea de regalo</span><div id="resultWishText"></div></div>
+      <div class="reveal-actions"><button class="btn btn-gold btn-block" id="hideBtn">Ya lo vi, ocultar</button></div>
+      <p class="reveal-hint">Oculta esto antes de pasar el teléfono.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- codificacion base32 (para meter el resultado en el enlace) ---------- */
+  var B32 = "abcdefghijklmnopqrstuvwxyz234567";
+  function b32encode(bytes) {
+    var out = "", bits = 0, val = 0;
+    for (var i = 0; i < bytes.length; i++) {
+      val = (val << 8) | bytes[i]; bits += 8;
+      while (bits >= 5) { out += B32[(val >>> (bits - 5)) & 31]; bits -= 5; }
+    }
+    if (bits > 0) out += B32[(val << (5 - bits)) & 31];
+    return out;
+  }
+  function b32decode(str) {
+    var bits = 0, val = 0, out = [];
+    for (var i = 0; i < str.length; i++) {
+      var idx = B32.indexOf(str[i]); if (idx < 0) continue;
+      val = (val << 5) | idx; bits += 5;
+      if (bits >= 8) { out.push((val >>> (bits - 8)) & 255); bits -= 8; }
+    }
+    return new Uint8Array(out);
+  }
+  function encodePayload(obj) {
+    return b32encode(new TextEncoder().encode(JSON.stringify(obj)));
+  }
+  function decodePayload(token) {
+    try {
+      var obj = JSON.parse(new TextDecoder().decode(b32decode(token)));
+      if (obj && typeof obj.n === "string") return obj;
+    } catch (e) {}
+    return null;
+  }
+
+  /* ---------- VISTA INVITADO: si el enlace trae un resultado, mostrarlo ---------- */
+  var hashTok = (location.hash || "").replace(/^#/, "").trim();
+  if (hashTok) {
+    var payload = decodePayload(hashTok);
+    if (payload) {
+      document.getElementById("app").hidden = true;
+      var gs = document.getElementById("guestScreen");
+      if (payload.g) {
+        document.getElementById("guestGiver").textContent = payload.g;
+        document.getElementById("guestHi").hidden = false;
+      }
+      document.getElementById("guestReceiver").textContent = payload.n;
+      if (payload.w) {
+        document.getElementById("guestWishText").textContent = payload.w;
+        document.getElementById("guestWish").hidden = false;
+      }
+      gs.hidden = false;
+      setupTheme();
+      return; // no arrancar la app de organizador
+    }
+  }
+
+  /* ---------- APP ORGANIZADOR ---------- */
+  var KEY = "amigo-secreto-v1";
+  var DEFAULT_BASE = "https://claude.ai/artifact/3W97cqVApnBe5dnzjNiaFY";
+  // Si la pagina esta alojada en un sitio normal (no dentro de Claude),
+  // usa su propia direccion para armar los enlaces. Asi funciona en cualquier host.
+  function guessBase() {
+    try {
+      var href = location.href.split("#")[0];
+      if (/^https?:\/\//.test(href) &&
+          !/claude\.ai|claudeusercontent|anthropic|usercontent\.goog/.test(location.href)) {
+        return location.origin + location.pathname;
+      }
+    } catch (e) {}
+    return DEFAULT_BASE;
+  }
+  var state = { people: [], assign: null, seen: {}, base: "" };
+
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (s && Array.isArray(s.people)) state = s;
+        if (!state.seen) state.seen = {};
+      }
+    } catch (e) {}
+    // Siempre detectar la direccion actual del sitio (no reusar una guardada).
+    state.base = "";
+  }
+  function uid() { return "p" + Math.random().toString(36).slice(2, 9); }
+  function initials(name) {
+    var parts = name.trim().split(/\s+/).filter(Boolean);
+    return ((parts[0] ? parts[0][0] : "?") + (parts[1] ? parts[1][0] : "")).toUpperCase();
+  }
+  function byId(id) {
+    for (var i = 0; i < state.people.length; i++) if (state.people[i].id === id) return state.people[i];
+    return null;
+  }
+  var $ = function (id) { return document.getElementById(id); };
+  var inName = $("inName"), inWish = $("inWish");
+  var peopleList = $("peopleList"), emptyState = $("emptyState"), countN = $("countN");
+  var drawBtn = $("drawBtn"), drawNote = $("drawNote");
+  var setup = $("setup"), revealHub = $("revealHub"), nameGrid = $("nameGrid");
+  var linkList = $("linkList"), baseUrl = $("baseUrl"), revealScreen = $("revealScreen");
+
+  function renderList() {
+    peopleList.innerHTML = "";
+    state.people.forEach(function (p) {
+      var li = document.createElement("li");
+      var av = document.createElement("div"); av.className = "avatar"; av.textContent = initials(p.name);
+      var box = document.createElement("div"); box.className = "grow";
+      var nm = document.createElement("div"); nm.className = "pname"; nm.textContent = p.name;
+      box.appendChild(nm);
+      if (p.wish) {
+        var mt = document.createElement("div"); mt.className = "pmeta"; mt.textContent = "🎁 " + p.wish;
+        box.appendChild(mt);
+      }
+      var del = document.createElement("button");
+      del.className = "del"; del.setAttribute("aria-label", "Quitar a " + p.name); del.textContent = "✕";
+      del.addEventListener("click", function () { removePerson(p.id); });
+      li.appendChild(av); li.appendChild(box); li.appendChild(del);
+      peopleList.appendChild(li);
+    });
+    countN.textContent = state.people.length;
+    emptyState.hidden = state.people.length > 0;
+    var ok = state.people.length >= 3;
+    drawBtn.disabled = !ok;
+    drawNote.textContent = ok
+      ? "Todo listo. Cuando estén todos, haz el sorteo."
+      : "Necesitas al menos 3 participantes (llevas " + state.people.length + ").";
+  }
+
+  function addPerson() {
+    var name = inName.value.trim();
+    if (!name) { inName.focus(); return; }
+    state.people.push({ id: uid(), name: name, wish: inWish.value.trim() });
+    inName.value = ""; inWish.value = "";
+    state.assign = null; state.seen = {};
+    save(); renderList(); inName.focus();
+  }
+  function removePerson(id) {
+    state.people = state.people.filter(function (p) { return p.id !== id; });
+    state.assign = null; state.seen = {};
+    save(); renderList();
+  }
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+  function draw() {
+    var ids = state.people.map(function (p) { return p.id; });
+    shuffle(ids);
+    var assign = {};
+    for (var i = 0; i < ids.length; i++) assign[ids[i]] = ids[(i + 1) % ids.length];
+    state.assign = assign; state.seen = {};
+    save(); showHub();
+  }
+
+  function personalLink(giver) {
+    var recv = byId(state.assign[giver.id]);
+    var tok = encodePayload({ g: giver.name, n: recv ? recv.name : "", w: recv ? recv.wish : "" });
+    var base = (state.base || guessBase()).trim().replace(/#.*$/, "");
+    return base + "#" + tok;
+  }
+
+  function showHub() {
+    setup.hidden = true; revealHub.hidden = false;
+    baseUrl.value = state.base || guessBase();
+    renderLinks(); renderGrid();
+    window.scrollTo(0, 0);
+  }
+  function showSetup() {
+    revealHub.hidden = true; setup.hidden = false;
+    renderList(); window.scrollTo(0, 0);
+  }
+
+  function renderLinks() {
+    linkList.innerHTML = "";
+    state.people.forEach(function (p) {
+      var li = document.createElement("li");
+      var av = document.createElement("div"); av.className = "avatar"; av.textContent = initials(p.name);
+      var box = document.createElement("div"); box.className = "grow";
+      var nm = document.createElement("div"); nm.className = "pname"; nm.textContent = p.name;
+      box.appendChild(nm);
+      var btn = document.createElement("button");
+      btn.className = "link-copy"; btn.textContent = "Copiar enlace";
+      btn.addEventListener("click", function () { copyLink(p, btn); });
+      li.appendChild(av); li.appendChild(box); li.appendChild(btn);
+      linkList.appendChild(li);
+    });
+  }
+
+  function copyLink(p, btn) {
+    var url = personalLink(p);
+    var done = function () { btn.textContent = "¡Copiado!"; btn.classList.add("done");
+      setTimeout(function () { btn.textContent = "Copiar enlace"; btn.classList.remove("done"); }, 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done, function () { fallbackCopy(url, done); });
+    } else { fallbackCopy(url, done); }
+  }
+  function fallbackCopy(text, done) {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) { window.prompt("Copia este enlace:", text); }
+    document.body.removeChild(ta);
+  }
+
+  /* pasar el telefono */
+  function renderGrid() {
+    nameGrid.innerHTML = "";
+    state.people.forEach(function (p) {
+      var b = document.createElement("button");
+      b.className = "name-btn" + (state.seen[p.id] ? " seen" : "");
+      var nm = document.createElement("span"); nm.className = "pname"; nm.textContent = p.name; b.appendChild(nm);
+      if (state.seen[p.id]) { var ck = document.createElement("span"); ck.className = "check"; ck.textContent = "✓"; b.appendChild(ck); }
+      b.addEventListener("click", function () { openReveal(p.id); });
+      nameGrid.appendChild(b);
+    });
+  }
+  var currentGiver = null;
+  function openReveal(giverId) {
+    currentGiver = giverId;
+    var giver = byId(giverId);
+    $("confirmName").textContent = giver ? giver.name : "—";
+    $("revealConfirm").hidden = false; $("revealResult").hidden = true;
+    revealScreen.hidden = false;
+  }
+  function showResult() {
+    var recv = byId(state.assign[currentGiver]);
+    $("resultName").textContent = recv ? recv.name : "—";
+    if (recv && recv.wish) { $("resultWishText").textContent = recv.wish; $("resultWish").hidden = false; }
+    else $("resultWish").hidden = true;
+    $("revealConfirm").hidden = true; $("revealResult").hidden = false;
+  }
+  function closeReveal() {
+    if (currentGiver) { state.seen[currentGiver] = true; save(); }
+    revealScreen.hidden = true; currentGiver = null; renderGrid();
+  }
+
+  /* eventos */
+  $("addBtn").addEventListener("click", addPerson);
+  [inName, inWish].forEach(function (el) {
+    el.addEventListener("keydown", function (e) { if (e.key === "Enter") addPerson(); });
+  });
+  drawBtn.addEventListener("click", draw);
+  $("redrawBtn").addEventListener("click", function () { if (state.people.length >= 3) draw(); });
+  $("editBtn").addEventListener("click", showSetup);
+  baseUrl.addEventListener("input", function () { state.base = baseUrl.value.trim(); save(); });
+  $("confirmYes").addEventListener("click", showResult);
+  $("confirmNo").addEventListener("click", function () { revealScreen.hidden = true; currentGiver = null; });
+  $("hideBtn").addEventListener("click", closeReveal);
+
+  /* arranque */
+  load();
+  renderList();
+  if (state.assign && state.people.length >= 2) {
+    var ok = state.people.every(function (p) { return state.assign[p.id] && byId(state.assign[p.id]); });
+    if (ok) showHub(); else { state.assign = null; showSetup(); }
+  } else showSetup();
+
+  function setupTheme() {}
+})();
+
+/* tema manual (global, sirve en ambas vistas) */
+function setupTheme() {
+  var KEYT = "amigo-secreto-v1-theme";
+  var themeBtn = document.getElementById("themeBtn");
+  if (!themeBtn) return;
+  themeBtn.addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme");
+    var next = cur === "dark" ? "light" : cur === "light" ? "dark"
+      : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem(KEYT, next); } catch (e) {}
+  });
+  try { var t = localStorage.getItem(KEYT); if (t) document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+}
+setupTheme();
+</script>
+
+</body>
+</html>
